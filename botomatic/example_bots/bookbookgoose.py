@@ -13,13 +13,13 @@ class BookBookGooseBot(TBot):
 
     def run(self):
         r = csv.reader(open(data_file))
-        books = [row for row in r]
+        books = list(r)
         random.shuffle(books)
         book = books.pop()
 
-        book_text = book[1] + ', by ' + book[0]
+        book_text = f'{book[1]}, by {book[0]}'
 
-        self.tweets.append(book_text[0:117] + ' ' + book[2])
+        self.tweets.append(book_text[:117] + ' ' + book[2])
 
         self.wrap_up()
 

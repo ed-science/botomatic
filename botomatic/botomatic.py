@@ -19,13 +19,13 @@ class TBot(object):
     dms = []
 
     def __init__(self, handle):
-        self.history_filename = handle + "_history.pickle"
+        self.history_filename = f"{handle}_history.pickle"
         self.auth = tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
         try:
-            self.settings = pickle.load(open(handle + "_settings.pickle", 'r'))
+            self.settings = pickle.load(open(f"{handle}_settings.pickle", 'r'))
         except IOError:
             self.authenticate()
-            pickle.dump(self.settings, open(handle + "_settings.pickle", 'w'))  # right place to save settings?
+            pickle.dump(self.settings, open(f"{handle}_settings.pickle", 'w'))
 
         try:
             self.history = pickle.load(open(self.history_filename, 'r'))
@@ -70,35 +70,34 @@ class TBot(object):
 
     def process_tweets(self):
         http_re = re.compile(r'http://\S+')
-        processed_tweets = []
-        for tweet in self.tweets:
-            processed_tweets.append(tweet)
+        processed_tweets = list(self.tweets)
         self.tweets = processed_tweets
 
     def publish_tweets(self, limit=None):
+        if not self.tweets:
+            return
         tweeted_count = 0
 
-        if self.tweets:
-            for twt in self.tweets:
-                try:
-                    (tweet, reply_id) = twt
-                except ValueError:
-                    tweet = twt
-                    reply_id = None
+        for twt in self.tweets:
+            try:
+                (tweet, reply_id) = twt
+            except ValueError:
+                tweet = twt
+                reply_id = None
 
-                if self.debug_mode:
-                    print("FAKETWEET: " + tweet[:140])  # for debug mode
-                else:
-                    try:
-                        if limit:
-                            if tweeted_count >= limit:
-                                continue
-                        else:
-                            status = self.api.update_status(tweet[:140], reply_id)  # cap length at 140 chars
-                            self.history['last_tweet_id'] = status.id
-                            tweeted_count += 1
-                    except tweepy.error.TweepError:  # prob a duplicate
-                        pass
+            if self.debug_mode:
+                print(f"FAKETWEET: {tweet[:140]}")
+            else:
+                try:
+                    if limit:
+                        if tweeted_count >= limit:
+                            continue
+                    else:
+                        status = self.api.update_status(tweet[:140], reply_id)  # cap length at 140 chars
+                        self.history['last_tweet_id'] = status.id
+                        tweeted_count += 1
+                except tweepy.error.TweepError:  # prob a duplicate
+                    pass
 
     def publish_dms(self):
         if self.dms:
@@ -136,5 +135,4 @@ class TBot(object):
         pickle.dump(self.history, open(self.history_filename, 'w'))
 
 
-if __name__ == '__main__':
-    pass
+pass
